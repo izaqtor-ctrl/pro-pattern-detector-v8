@@ -126,21 +126,30 @@ def add_trading_levels(fig, levels):
 
 def add_pattern_annotations(fig, data, pattern_type, pattern_info, levels):
     """Add pattern-specific annotations to chart"""
-    # Add pattern structure annotations first
-    add_pattern_structure_annotations(fig, data, pattern_type, pattern_info)
+    try:
+        # Add pattern structure annotations first
+        add_pattern_structure_annotations(fig, data, pattern_type, pattern_info)
+    except Exception as e:
+        print(f"Error in pattern structure annotations: {e}")
     
-    # Add pattern-specific measured move annotations
-    if pattern_type == "Inside Bar":
-        add_inside_bar_annotations(fig, data, pattern_info, levels)
-    elif pattern_type == "Bull Flag":
-        add_bull_flag_annotations(fig, data, pattern_info, levels)
-    elif pattern_type == "Cup Handle":
-        add_cup_handle_annotations(fig, data, pattern_info, levels)
-    elif pattern_type == "Flat Top Breakout":
-        add_flat_top_annotations(fig, data, pattern_info, levels)
+    try:
+        # Add pattern-specific measured move annotations
+        if pattern_type == "Inside Bar":
+            add_inside_bar_annotations(fig, data, pattern_info, levels)
+        elif pattern_type == "Bull Flag":
+            add_bull_flag_annotations(fig, data, pattern_info, levels)
+        elif pattern_type == "Cup Handle":
+            add_cup_handle_annotations(fig, data, pattern_info, levels)
+        elif pattern_type == "Flat Top Breakout":
+            add_flat_top_annotations(fig, data, pattern_info, levels)
+    except Exception as e:
+        print(f"Error in measured move annotations: {e}")
     
-    # Add invalidation warnings if present
-    add_invalidation_warnings(fig, data, pattern_info, levels)
+    try:
+        # Add invalidation warnings if present
+        add_invalidation_warnings(fig, data, pattern_info, levels)
+    except Exception as e:
+        print(f"Error in invalidation warnings: {e}")
 
 def add_pattern_structure_annotations(fig, data, pattern_type, pattern_info):
     """Add structural annotations to show pattern formation points"""
