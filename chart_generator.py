@@ -1,4 +1,4 @@
-# chart_generator.py
+# chart_generator.py - V10 of Chart stuff
 # Pattern Detector V8.0 - Chart Creation Functions
 
 import plotly.graph_objects as go
