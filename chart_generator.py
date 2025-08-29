@@ -1,4 +1,4 @@
-# chart_generator.py - V10 of Chart stuff
+# chart_generator.py
 # Pattern Detector V8.0 - Chart Creation Functions
 
 import plotly.graph_objects as go
@@ -642,7 +642,7 @@ def add_timing_annotations(fig, data, market_context, levels):
     
     fig.add_annotation(
         x=data.index[-15], 
-        y=levels['entry'] * 0.98,
+        y=levels['entry'] * 0.95,  # Moved down from 0.98 to avoid overlap
         text=f"{market_context['entry_timing']}",
         showarrow=True, 
         arrowhead=2, 
@@ -670,7 +670,7 @@ def add_volume_annotations(fig, data, pattern_info, levels):
     
     fig.add_annotation(
         x=data.index[-10], 
-        y=levels['entry'] * 1.02,
+        y=levels['entry'] * 1.08,  # Moved up from 1.02 to create more separation
         text=f"{volume_status}",
         showarrow=True, 
         arrowhead=2, 
