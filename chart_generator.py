@@ -142,7 +142,330 @@ def add_pattern_annotations(fig, data, pattern_type, pattern_info, levels):
     # Add invalidation warnings if present
     add_invalidation_warnings(fig, data, pattern_info, levels)
 
-def add_inside_bar_annotations(fig, data, pattern_info, levels):
+def add_pattern_structure_annotations(fig, data, pattern_type, pattern_info):
+    """Add structural annotations to show pattern formation points"""
+    if pattern_type == "Inside Bar":
+        add_inside_bar_structure(fig, data, pattern_info)
+    elif pattern_type == "Bull Flag":
+        add_bull_flag_structure(fig, data, pattern_info)
+    elif pattern_type == "Cup Handle":
+        add_cup_handle_structure(fig, data, pattern_info)
+    elif pattern_type == "Flat Top Breakout":
+        add_flat_top_structure(fig, data, pattern_info)
+
+def add_inside_bar_structure(fig, data, pattern_info):
+    """Add Inside Bar pattern structure annotations"""
+    mother_bar_high = pattern_info.get('mother_bar_high')
+    mother_bar_low = pattern_info.get('mother_bar_low')
+    inside_bar_high = pattern_info.get('inside_bar_high')
+    inside_bar_low = pattern_info.get('inside_bar_low')
+    
+    if mother_bar_high and mother_bar_low:
+        # Mother bar range
+        fig.add_hline(
+            y=mother_bar_high, 
+            line_color="blue", 
+            line_width=2, 
+            line_dash="dash",
+            annotation_text="Mother Bar High", 
+            row=1, col=1
+        )
+        fig.add_hline(
+            y=mother_bar_low, 
+            line_color="blue", 
+            line_width=2, 
+            line_dash="dash",
+            annotation_text="Mother Bar Low", 
+            row=1, col=1
+        )
+        
+        # Consolidation zone
+        fig.add_annotation(
+            x=data.index[-3],
+            y=(mother_bar_high + mother_bar_low) / 2,
+            text=f"CONSOLIDATION<br>Size: {pattern_info.get('size_ratio', 'N/A')}<br>Bars: {pattern_info.get('inside_bars_count', 1)}",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="blue",
+            bgcolor="rgba(0,0,255,0.1)",
+            bordercolor="blue",
+            font=dict(size=10)
+        )
+
+def add_bull_flag_structure(fig, data, pattern_info):
+    """Add Bull Flag pattern structure annotations"""
+    if len(data) < 30:
+        return
+    
+    # Estimate flagpole and flag boundaries
+    flagpole_start_idx = min(25, len(data) - 10)
+    flag_start_idx = 15
+    
+    flagpole_data = data.iloc[-flagpole_start_idx:-flag_start_idx]
+    flag_data = data.tail(15)
+    
+    if len(flagpole_data) > 0 and len(flag_data) > 0:
+        # Flagpole markers
+        flagpole_start = flagpole_data['Low'].min()
+        flagpole_peak = flagpole_data['High'].max()
+        flag_start = flag_data['High'].iloc[0]
+        flag_low = flag_data['Low'].min()
+        
+        # Add flagpole annotations
+        fig.add_annotation(
+            x=data.index[-flagpole_start_idx],
+            y=flagpole_start,
+            text="FLAGPOLE<br>START",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="green",
+            bgcolor="rgba(0,255,0,0.1)",
+            bordercolor="green",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=flagpole_data.index[flagpole_data['High'].idxmax()],
+            y=flagpole_peak,
+            text=f"FLAGPOLE<br>PEAK<br>{pattern_info.get('flagpole_gain', 'N/A')}",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="green",
+            bgcolor="rgba(0,255,0,0.1)",
+            bordercolor="green",
+            font=dict(size=9)
+        )
+        
+        # Flag annotations
+        fig.add_annotation(
+            x=data.index[-flag_start_idx],
+            y=flag_start,
+            text="FLAG<br>START",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="orange",
+            bgcolor="rgba(255,165,0,0.1)",
+            bordercolor="orange",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=flag_data.index[flag_data['Low'].idxmin()],
+            y=flag_low,
+            text=f"FLAG<br>LOW<br>{pattern_info.get('flag_pullback', 'N/A')}",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="orange",
+            bgcolor="rgba(255,165,0,0.1)",
+            bordercolor="orange",
+            font=dict(size=9)
+        )
+
+def add_flat_top_structure(fig, data, pattern_info):
+    """Add Flat Top pattern structure annotations"""
+    if len(data) < 50:
+        return
+    
+    # Estimate pattern boundaries
+    ascent_start_idx = min(45, len(data) - 15)
+    ascent_end_idx = 25
+    
+    ascent_data = data.iloc[-ascent_start_idx:-ascent_end_idx]
+    descent_data = data.iloc[-ascent_end_idx:-10]
+    recent_data = data.tail(15)
+    
+    if len(ascent_data) > 0 and len(descent_data) > 0:
+        # Pattern structure points
+        initial_low = ascent_data['Low'].min()
+        first_peak = ascent_data['High'].max()
+        pullback_low = descent_data['Low'].min()
+        resistance_level = pattern_info.get('resistance_level', first_peak)
+        
+        # Add structure annotations
+        fig.add_annotation(
+            x=ascent_data.index[ascent_data['Low'].idxmin()],
+            y=initial_low,
+            text=f"PATTERN<br>START<br>{pattern_info.get('initial_ascension', 'N/A')}",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="green",
+            bgcolor="rgba(0,255,0,0.1)",
+            bordercolor="green",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=ascent_data.index[ascent_data['High'].idxmax()],
+            y=first_peak,
+            text="FIRST<br>PEAK",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="red",
+            bgcolor="rgba(255,0,0,0.1)",
+            bordercolor="red",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=descent_data.index[descent_data['Low'].idxmin()],
+            y=pullback_low,
+            text="PULLBACK<br>LOW",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="blue",
+            bgcolor="rgba(0,0,255,0.1)",
+            bordercolor="blue",
+            font=dict(size=9)
+        )
+        
+        # Resistance line
+        fig.add_hline(
+            y=resistance_level,
+            line_color="red",
+            line_width=2,
+            line_dash="dot",
+            annotation_text=f"RESISTANCE ({pattern_info.get('resistance_touches', 'N/A')} touches)",
+            row=1, col=1
+        )
+        
+        # Higher lows indication
+        if pattern_info.get('higher_lows'):
+            fig.add_annotation(
+                x=data.index[-8],
+                y=pullback_low * 1.02,
+                text="HIGHER<br>LOWS",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="purple",
+                bgcolor="rgba(128,0,128,0.1)",
+                bordercolor="purple",
+                font=dict(size=9)
+            )
+
+def add_cup_handle_structure(fig, data, pattern_info):
+    """Add Cup Handle pattern structure annotations"""
+    if len(data) < 30:
+        return
+    
+    # Estimate cup and handle boundaries
+    max_lookback = min(100, len(data) - 3)
+    handle_days = min(30, max_lookback // 3)
+    
+    cup_data = data.iloc[-max_lookback:-handle_days] if handle_days > 0 else data.iloc[-max_lookback:]
+    handle_data = data.tail(handle_days) if handle_days > 0 else data.tail(5)
+    
+    if len(cup_data) > 15:
+        # Cup structure points
+        cup_start = cup_data.index[0]
+        cup_start_price = cup_data['Close'].iloc[0]
+        cup_bottom = cup_data['Low'].min()
+        cup_bottom_idx = cup_data.index[cup_data['Low'].idxmin()]
+        cup_end = cup_data.index[-1]
+        cup_end_price = cup_data['Close'].iloc[-1]
+        
+        # Cup annotations
+        fig.add_annotation(
+            x=cup_start,
+            y=cup_start_price,
+            text="CUP<br>LEFT RIM",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="blue",
+            bgcolor="rgba(0,0,255,0.1)",
+            bordercolor="blue",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=cup_bottom_idx,
+            y=cup_bottom,
+            text=f"CUP<br>BOTTOM<br>{pattern_info.get('cup_depth', 'N/A')}",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="red",
+            bgcolor="rgba(255,0,0,0.1)",
+            bordercolor="red",
+            font=dict(size=9)
+        )
+        
+        fig.add_annotation(
+            x=cup_end,
+            y=cup_end_price,
+            text="CUP<br>RIGHT RIM",
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="blue",
+            bgcolor="rgba(0,0,255,0.1)",
+            bordercolor="blue",
+            font=dict(size=9)
+        )
+        
+        # Handle annotations (if exists)
+        if handle_days > 0 and len(handle_data) > 0:
+            handle_low = handle_data['Low'].min()
+            handle_low_idx = handle_data.index[handle_data['Low'].idxmin()]
+            
+            fig.add_annotation(
+                x=handle_data.index[0],
+                y=handle_data['Close'].iloc[0],
+                text="HANDLE<br>START",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="orange",
+                bgcolor="rgba(255,165,0,0.1)",
+                bordercolor="orange",
+                font=dict(size=9)
+            )
+            
+            if 'handle_depth' in pattern_info or handle_low < cup_end_price * 0.95:
+                fig.add_annotation(
+                    x=handle_low_idx,
+                    y=handle_low,
+                    text=f"HANDLE<br>LOW<br>{pattern_info.get('perfect_handle', pattern_info.get('good_handle', pattern_info.get('acceptable_handle', 'N/A')))}",
+                    showarrow=True,
+                    arrowhead=2,
+                    arrowcolor="orange",
+                    bgcolor="rgba(255,165,0,0.1)",
+                    bordercolor="orange",
+                    font=dict(size=9)
+                )
+
+def add_invalidation_warnings(fig, data, pattern_info, levels):
+    """Add prominent invalidation warnings if pattern is compromised"""
+    warnings = []
+    
+    # Check for various invalidation flags
+    if pattern_info.get('pattern_broken'):
+        warnings.append(f"INVALIDATED: {pattern_info.get('break_reason', 'Pattern broken')}")
+    
+    if pattern_info.get('pattern_stale') or pattern_info.get('pattern_aging'):
+        age = pattern_info.get('days_old', pattern_info.get('age_periods', 'Unknown'))
+        warnings.append(f"AGING: Pattern {age} periods old")
+    
+    if pattern_info.get('confidence_capped'):
+        warnings.append(f"LIMITED: {pattern_info['confidence_capped']}")
+    
+    if pattern_info.get('far_from_rim'):
+        warnings.append("WARNING: Price far from breakout level")
+    
+    if pattern_info.get('below_handle'):
+        warnings.append("WARNING: Below handle support")
+    
+    # Add warning annotations
+    if warnings:
+        warning_text = "<br>".join(warnings)
+        fig.add_annotation(
+            x=data.index[-1],
+            y=levels['entry'] * 1.05,
+            text=warning_text,
+            showarrow=True,
+            arrowhead=2,
+            arrowcolor="red",
+            bgcolor="rgba(255,0,0,0.2)",
+            bordercolor="red",
+            font=dict(color="red", size=11, family="Arial Black"),
+            borderwidth=2
+        )
     """Add Inside Bar specific annotations"""
     mother_bar_high = pattern_info.get('mother_bar_high')
     mother_bar_low = pattern_info.get('mother_bar_low')
