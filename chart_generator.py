@@ -197,23 +197,41 @@ def add_bull_flag_structure(fig, data, pattern_info):
     if len(data) < 30:
         return
     
-    # Estimate flagpole and flag boundaries
+    # Estimate flagpole and flag boundaries with bounds checking
     flagpole_start_idx = min(25, len(data) - 10)
     flag_start_idx = 15
+    
+    # Ensure we have valid data slices
+    if flagpole_start_idx <= flag_start_idx:
+        return
     
     flagpole_data = data.iloc[-flagpole_start_idx:-flag_start_idx]
     flag_data = data.tail(15)
     
-    if len(flagpole_data) > 0 and len(flag_data) > 0:
+    # Check if we have enough data
+    if len(flagpole_data) == 0 or len(flag_data) == 0:
+        return
+    
+    try:
         # Flagpole markers
         flagpole_start = flagpole_data['Low'].min()
         flagpole_peak = flagpole_data['High'].max()
         flag_start = flag_data['High'].iloc[0]
         flag_low = flag_data['Low'].min()
         
+        # Find indices safely
+        flagpole_peak_idx = flagpole_data['High'].idxmax()
+        flag_low_idx = flag_data['Low'].idxmin()
+        
+        # Verify indices exist
+        if flagpole_peak_idx not in flagpole_data.index:
+            flagpole_peak_idx = flagpole_data.index[-1]
+        if flag_low_idx not in flag_data.index:
+            flag_low_idx = flag_data.index[0]
+        
         # Add flagpole annotations
         fig.add_annotation(
-            x=data.index[-flagpole_start_idx],
+            x=flagpole_data.index[0],
             y=flagpole_start,
             text="FLAGPOLE<br>START",
             showarrow=True,
@@ -225,7 +243,7 @@ def add_bull_flag_structure(fig, data, pattern_info):
         )
         
         fig.add_annotation(
-            x=flagpole_data.index[flagpole_data['High'].idxmax()],
+            x=flagpole_peak_idx,
             y=flagpole_peak,
             text=f"FLAGPOLE<br>PEAK<br>{pattern_info.get('flagpole_gain', 'N/A')}",
             showarrow=True,
@@ -238,7 +256,7 @@ def add_bull_flag_structure(fig, data, pattern_info):
         
         # Flag annotations
         fig.add_annotation(
-            x=data.index[-flag_start_idx],
+            x=flag_data.index[0],
             y=flag_start,
             text="FLAG<br>START",
             showarrow=True,
@@ -250,7 +268,7 @@ def add_bull_flag_structure(fig, data, pattern_info):
         )
         
         fig.add_annotation(
-            x=flag_data.index[flag_data['Low'].idxmin()],
+            x=flag_low_idx,
             y=flag_low,
             text=f"FLAG<br>LOW<br>{pattern_info.get('flag_pullback', 'N/A')}",
             showarrow=True,
@@ -260,30 +278,66 @@ def add_bull_flag_structure(fig, data, pattern_info):
             bordercolor="orange",
             font=dict(size=9)
         )
+        
+    except Exception as e:
+        # Fallback: just add basic flag information
+        if 'flagpole_gain' in pattern_info:
+            fig.add_annotation(
+                x=data.index[-10],
+                y=data['High'].iloc[-10],
+                text=f"Bull Flag Pattern<br>{pattern_info['flagpole_gain']}",
+                showarrow=True,
+                arrowhead=2,
+                arrowcolor="green",
+                bgcolor="rgba(0,255,0,0.1)",
+                bordercolor="green",
+                font=dict(size=9)
+            )
 
 def add_flat_top_structure(fig, data, pattern_info):
     """Add Flat Top pattern structure annotations"""
     if len(data) < 50:
         return
     
-    # Estimate pattern boundaries
+    # Estimate pattern boundaries with bounds checking
     ascent_start_idx = min(45, len(data) - 15)
     ascent_end_idx = 25
+    
+    # Ensure we have valid data slices
+    if ascent_start_idx <= ascent_end_idx:
+        return
     
     ascent_data = data.iloc[-ascent_start_idx:-ascent_end_idx]
     descent_data = data.iloc[-ascent_end_idx:-10]
     recent_data = data.tail(15)
     
-    if len(ascent_data) > 0 and len(descent_data) > 0:
-        # Pattern structure points
+    # Check if we have enough data
+    if len(ascent_data) == 0 or len(descent_data) == 0:
+        return
+    
+    try:
+        # Pattern structure points with safe index access
         initial_low = ascent_data['Low'].min()
         first_peak = ascent_data['High'].max()
         pullback_low = descent_data['Low'].min()
         resistance_level = pattern_info.get('resistance_level', first_peak)
         
+        # Find indices safely
+        initial_low_idx = ascent_data['Low'].idxmin()
+        first_peak_idx = ascent_data['High'].idxmax()
+        pullback_low_idx = descent_data['Low'].idxmin()
+        
+        # Verify indices exist in the data
+        if initial_low_idx not in ascent_data.index:
+            initial_low_idx = ascent_data.index[0]
+        if first_peak_idx not in ascent_data.index:
+            first_peak_idx = ascent_data.index[-1]
+        if pullback_low_idx not in descent_data.index:
+            pullback_low_idx = descent_data.index[0]
+        
         # Add structure annotations
         fig.add_annotation(
-            x=ascent_data.index[ascent_data['Low'].idxmin()],
+            x=initial_low_idx,
             y=initial_low,
             text=f"PATTERN<br>START<br>{pattern_info.get('initial_ascension', 'N/A')}",
             showarrow=True,
@@ -295,7 +349,7 @@ def add_flat_top_structure(fig, data, pattern_info):
         )
         
         fig.add_annotation(
-            x=ascent_data.index[ascent_data['High'].idxmax()],
+            x=first_peak_idx,
             y=first_peak,
             text="FIRST<br>PEAK",
             showarrow=True,
@@ -307,7 +361,7 @@ def add_flat_top_structure(fig, data, pattern_info):
         )
         
         fig.add_annotation(
-            x=descent_data.index[descent_data['Low'].idxmin()],
+            x=pullback_low_idx,
             y=pullback_low,
             text="PULLBACK<br>LOW",
             showarrow=True,
@@ -329,7 +383,7 @@ def add_flat_top_structure(fig, data, pattern_info):
         )
         
         # Higher lows indication
-        if pattern_info.get('higher_lows'):
+        if pattern_info.get('higher_lows') and len(data) >= 8:
             fig.add_annotation(
                 x=data.index[-8],
                 y=pullback_low * 1.02,
@@ -340,6 +394,19 @@ def add_flat_top_structure(fig, data, pattern_info):
                 bgcolor="rgba(128,0,128,0.1)",
                 bordercolor="purple",
                 font=dict(size=9)
+            )
+            
+    except Exception as e:
+        # Fallback: just add resistance line if structure annotation fails
+        resistance_level = pattern_info.get('resistance_level')
+        if resistance_level:
+            fig.add_hline(
+                y=resistance_level,
+                line_color="red",
+                line_width=2,
+                line_dash="dot",
+                annotation_text="RESISTANCE",
+                row=1, col=1
             )
 
 def add_cup_handle_structure(fig, data, pattern_info):
