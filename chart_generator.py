@@ -126,6 +126,10 @@ def add_trading_levels(fig, levels):
 
 def add_pattern_annotations(fig, data, pattern_type, pattern_info, levels):
     """Add pattern-specific annotations to chart"""
+    # Add pattern structure annotations first
+    add_pattern_structure_annotations(fig, data, pattern_type, pattern_info)
+    
+    # Add pattern-specific measured move annotations
     if pattern_type == "Inside Bar":
         add_inside_bar_annotations(fig, data, pattern_info, levels)
     elif pattern_type == "Bull Flag":
@@ -134,6 +138,9 @@ def add_pattern_annotations(fig, data, pattern_type, pattern_info, levels):
         add_cup_handle_annotations(fig, data, pattern_info, levels)
     elif pattern_type == "Flat Top Breakout":
         add_flat_top_annotations(fig, data, pattern_info, levels)
+    
+    # Add invalidation warnings if present
+    add_invalidation_warnings(fig, data, pattern_info, levels)
 
 def add_inside_bar_annotations(fig, data, pattern_info, levels):
     """Add Inside Bar specific annotations"""
